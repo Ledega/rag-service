@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ app_name }}</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f4f1ea;
+        --panel: rgba(255, 255, 255, 0.82);
+        --panel-strong: #ffffff;
+        --text: #1f2937;
+        --muted: #6b7280;
+        --accent: #0f766e;
+        --accent-strong: #115e59;
+        --border: rgba(31, 41, 55, 0.12);
+        --shadow: 0 24px 80px rgba(15, 23, 42, 0.12);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Segoe UI", "Noto Sans SC", sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at top left, rgba(15, 118, 110, 0.16), transparent 28%),
+          radial-gradient(circle at top right, rgba(251, 191, 36, 0.18), transparent 24%),
+          linear-gradient(180deg, #faf7f2 0%, #f4f1ea 100%);
+      }
+
+      .shell {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 32px 20px 40px;
+      }
+
+      .hero {
+        display: grid;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+
+      .eyebrow {
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(2rem, 4vw, 3.8rem);
+        line-height: 1.02;
+      }
+
+      .subtitle {
+        max-width: 72ch;
+        color: var(--muted);
+        font-size: 1rem;
+        line-height: 1.7;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 340px minmax(0, 1fr);
+        gap: 20px;
+      }
+
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 22px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(14px);
+      }
+
+      .card-head {
+        padding: 18px 18px 0;
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .card-body {
+        padding: 18px;
+      }
+
+      .section-title {
+        margin: 0;
+        font-size: 1rem;
+      }
+
+      .muted {
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .stack {
+        display: grid;
+        gap: 14px;
+      }
+
+      .document-list {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .document-item,
+      .citation-card {
+        background: rgba(255, 255, 255, 0.68);
+        border: 1px solid rgba(31, 41, 55, 0.08);
+        border-radius: 16px;
+        padding: 14px;
+      }
+
+      .document-item {
+        display: grid;
+        gap: 6px;
+      }
+
+      .document-item span,
+      .citation-meta {
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+
+      form {
+        display: grid;
+        gap: 12px;
+      }
+
+      label {
+        display: grid;
+        gap: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+      }
+
+      input,
+      textarea,
+      button {
+        font: inherit;
+      }
+
+      input[type="text"],
+      textarea {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid rgba(31, 41, 55, 0.14);
+        background: var(--panel-strong);
+        color: var(--text);
+        outline: none;
+      }
+
+      textarea {
+        min-height: 120px;
+        resize: vertical;
+      }
+
+      input[type="text"]:focus,
+      textarea:focus {
+        border-color: rgba(15, 118, 110, 0.45);
+        box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.08);
+      }
+
+      button {
+        border: 0;
+        border-radius: 14px;
+        padding: 12px 16px;
+        background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+        color: white;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      button:hover {
+        filter: brightness(1.03);
+      }
+
+      .two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      pre {
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-family: "Cascadia Code", "Consolas", monospace;
+        font-size: 0.95rem;
+        line-height: 1.7;
+      }
+
+      .section {
+        display: grid;
+        gap: 12px;
+      }
+
+      .output {
+        min-height: 160px;
+      }
+
+      .citation-grid {
+        display: grid;
+        gap: 10px;
+      }
+
+      .status {
+        min-height: 24px;
+        color: var(--accent-strong);
+        font-size: 0.94rem;
+      }
+
+      @media (max-width: 960px) {
+        .grid,
+        .two-col {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <div class="eyebrow">Minimal RAG Starter</div>
+        <h1>{{ app_name }}</h1>
+        <p class="subtitle">
+          这是一个适合学习的最小可运行 RAG 骨架：FastAPI 负责接口和页面，SQLite 负责存储，
+          TfidfVectorizer 负责检索，前端单页负责上传文档和提问。
+        </p>
+      </header>
+
+      <section class="grid">
+        <aside class="card">
+          <div class="card-head">
+            <h2 class="section-title">知识库</h2>
+            <span id="document-count" class="muted">0 份文档</span>
+          </div>
+          <div class="card-body">
+            <form id="upload-form">
+              <label>
+                文档名称
+                <input type="text" name="name" value="uploaded-document.txt" />
+              </label>
+              <label>
+                上传文本文件
+                <input type="file" name="file" accept=".txt,.md,text/plain,text/markdown" />
+              </label>
+              <label>
+                或直接粘贴文本
+                <textarea name="content" placeholder="把你想检索的内容粘贴到这里，系统会自动切 chunk 并入库。"></textarea>
+              </label>
+              <button type="submit">导入文档</button>
+            </form>
+            <div id="upload-status" class="status"></div>
+            <div id="document-list" class="document-list"></div>
+          </div>
+        </aside>
+
+        <section class="stack">
+          <article class="card section">
+            <div class="card-head">
+              <h2 class="section-title">提问</h2>
+              <span class="muted">先检索，再组织答案</span>
+            </div>
+            <div class="card-body">
+              <form id="ask-form">
+                <label>
+                  问题
+                  <textarea id="question-input" placeholder="例如：RAG 的核心流程是什么？"></textarea>
+                </label>
+                <button type="submit">开始检索</button>
+              </form>
+            </div>
+          </article>
+
+          <div class="two-col">
+            <article class="card section">
+              <div class="card-head">
+                <h2 class="section-title">回答</h2>
+              </div>
+              <div class="card-body output">
+                <pre id="answer-output" class="muted">在右侧输入问题后，这里会显示基于检索结果生成的答案。</pre>
+              </div>
+            </article>
+
+            <article class="card section">
+              <div class="card-head">
+                <h2 class="section-title">引用片段</h2>
+              </div>
+              <div class="card-body citation-grid" id="citation-output">
+                <div class="muted">这里会列出命中的文档片段。</div>
+              </div>
+            </article>
+          </div>
+        </section>
+      </section>
+    </main>
+    <script src="/static/app.js" defer></script>
+  </body>
+</html>
