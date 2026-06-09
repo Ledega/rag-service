@@ -1,25 +1,10 @@
 # 开启未来版本的注解行为，让类型注解以字符串形式延迟解析
 from __future__ import annotations
 
-# 从 pathlib 导入 Path，用来更安全地处理文件路径
 from pathlib import Path
-
-# 从 fastapi 导入常用组件：
-# Depends 用于依赖注入（本文件里暂时没用到）
-# FastAPI 用于创建应用实例
-# File 用于声明上传文件参数
-# Form 用于声明表单字段参数
-# HTTPException 用于主动抛出 HTTP 错误
-# UploadFile 表示上传的文件对象
 from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
-
-# 导入 HTMLResponse，用于声明某个接口返回 HTML 页面
 from fastapi.responses import HTMLResponse
-
-# 导入 StaticFiles，用于挂载静态资源目录（CSS、JS、图片等）
 from fastapi.staticfiles import StaticFiles
-
-# 导入 Jinja2Templates，用于渲染 HTML 模板
 from fastapi.templating import Jinja2Templates
 
 # 导入 Pydantic 的 BaseModel 和 Field：
@@ -30,18 +15,8 @@ from pydantic import BaseModel, Field
 # 导入 Request 类型，模板渲染时常常需要传入 request 对象
 from starlette.requests import Request
 
-# 从你自己的数据库模块中导入若干函数：
-# add_document：新增文档
-# ensure_storage：确保存储空间/表/文件存在
-# list_chunks：列出所有文档切片
-# list_documents：列出所有文档
-# seed_demo_documents：插入演示文档
+# 从你自己的 db模块 | RAG模块中导入若干函数：
 from app.db import add_document, ensure_storage, list_chunks, list_documents, seed_demo_documents
-
-# 从你自己的 RAG 模块中导入若干函数：
-# build_answer：根据问题和检索结果构造回答
-# chunk_text：把长文本切成多个块
-# retrieve_chunks：根据问题检索相关文本块
 from app.rag import build_answer, chunk_text, retrieve_chunks
 
 # 当前文件路径，例如 /project/app/main.py
@@ -62,6 +37,8 @@ app = FastAPI(title="RAG Service", version="0.1.0")
 
 # 把 /static 路由映射到本地 STATIC_DIR 目录
 # 这样浏览器访问 /static/xxx.css 时，就能取到对应静态文件
+# index.html line:309     
+# <script src="/static/app.js" defer></script>
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 # 初始化 Jinja2 模板引擎，并指定模板目录
@@ -103,7 +80,8 @@ def index(request: Request) -> HTMLResponse:
             # request 必须传给模板，很多模板函数依赖它
             "request": request,
 
-            # 应用名，可以显示在页面标题或页头
+            # index.html line:6     <title>{{ app_name }}</title>
+            # 这里传入 app_name 变量，模板里就可以使用 {{ app_name }} 来显示应用名称
             "app_name": "RAG Service",
         },
     )
@@ -127,7 +105,7 @@ def get_documents() -> dict[str, object]:
 
 
 # 定义上传文档接口
-# 支持文本内容上传，也支持文件上传
+# 支持文本内容上传，也支持文件上传 异步函数
 @app.post("/api/documents")
 async def upload_document(
     # name 是表单字段，表示文档名称，默认值为 uploaded-document.txt
