@@ -5,15 +5,14 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
 
+from app.config import settings
+
 # ==========================================
 # 路径配置与全局变量设置
 # ==========================================
-# 获取当前文件所在目录的上一级目录（通常是项目的根目录）
-BASE_DIR = Path(__file__).resolve().parent.parent
-# 定义数据存放文件夹路径（根目录下的 data 文件夹）
-DATA_DIR = BASE_DIR / "data"
-# 定义 SQLite 数据库文件的绝对路径
-DB_PATH = DATA_DIR / "rag.db"
+# 从 config 统一读取 SQLite 数据库路径
+DB_PATH = Path(settings.DB_PATH)
+DATA_DIR = DB_PATH.parent
 
 # 预设的演示用文档数据，包含两个元组：(文档名称, 文档内容)
 DEMO_DOCUMENTS = [

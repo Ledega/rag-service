@@ -1,95 +1,72 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
-from typing import Iterable
 
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-from langchain_text_splitter import RecursiveCharacterTextSplitter
-
-
-@dataclass(slots=True)
-class RetrievedChunk:
-    document_name: str
-    chunk_index: int
-    content: str
-    score: float
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 
 def normalize_text(text: str) -> str:
+    """统一换行符、压缩连续空白。"""
     text = text.replace("\r\n", "\n").replace("\r", "\n")
     text = re.sub(r"[ \t]+", " ", text)
     return text.strip()
 
 
 def chunk_text(text: str, chunk_size: int = 600, overlap: int = 100) -> list[str]:
+    """将长文本切分为多个块，使用 RecursiveCharacterTextSplitter。"""
     normalized = normalize_text(text)
     if not normalized:
         return []
 
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=overlap)
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=chunk_size, chunk_overlap=overlap
+    )
     chunks = text_splitter.split_text(normalized)
     return chunks
 
 
-def retrieve_chunks(question: str, chunks: Iterable[dict[str, object]], top_k: int = 4) -> list[RetrievedChunk]:
-    chunk_rows = list(chunks)
-    if not chunk_rows:
-        return []
+def retrieve_chunks(
+    question: str,
+    top_k: int = 4,
+) -> list[dict]:
+    """
+    语义检索：将问题转为向量，从 Chroma 中检索最相关的文本块。
 
-    corpus = [str(row["content"]) for row in chunk_rows]
-    vectorizer = TfidfVectorizer(ngram_range=(1, 2), min_df=1)
-    matrix = vectorizer.fit_transform(corpus + [question])
-    similarity_scores = cosine_similarity(matrix[-1], matrix[:-1]).flatten()
+    :param question: 用户问题
+    :param top_k: 返回结果数量
+    :return: 检索结果列表，每项含 source / score / content
+    """
+    from app.vector_store import retrieve_chunks as _retrieve
 
-    ranked_indices = similarity_scores.argsort()[::-1][:top_k]
-    results: list[RetrievedChunk] = []
-    for index in ranked_indices:
-        row = chunk_rows[index]
-        results.append(
-            RetrievedChunk(
-                document_name=str(row["document_name"]),
-                chunk_index=int(row["chunk_index"]),
-                content=str(row["content"]),
-                score=float(similarity_scores[index]),
-            )
-        )
-    return results
+    return _retrieve(question, top_k=top_k)
 
 
-def build_answer(question: str, retrieved_chunks: list[RetrievedChunk]) -> dict[str, object]:
+def build_answer(
+    question: str,
+    retrieved_chunks: list[dict],
+) -> dict[str, object]:
+    """
+    基于问题和检索结果生成最终回答。
+    如果检索结果为空则返回兜底信息，否则调用 LLM 生成真实回答。
+
+    :param question: 用户问题
+    :param retrieved_chunks: 检索结果列表
+    :return: 包含 answer 和 citations 的字典
+    """
     if not retrieved_chunks:
         return {
-            "answer": "当前知识库里还没有足够内容。先上传一份文本或使用示例文档，再来提问。",
+            "answer": "当前知识库里还没有足够内容。先上传一份文档，再来提问。",
             "citations": [],
         }
 
+    # 取 top-3 作为 LLM 上下文（与前端展示一致）
     top_chunks = retrieved_chunks[:3]
-    citations = [
-        {
-            "source": f"{chunk.document_name} / chunk {chunk.chunk_index + 1}",
-            "score": round(chunk.score, 3),
-            "content": chunk.content,
-        }
-        for chunk in top_chunks
-    ]
 
-    answer_lines = [
-        f"根据检索到的文档，和问题“{question}”最相关的是下面这些片段。",
-        "",
-        "可以先把它理解成一个最小版 RAG：先检索，再把检索结果组织成答案。",
-        "",
-        "重点参考：",
-    ]
-    for citation in citations:
-        answer_lines.append(f"- {citation['source']}: {citation['content'][:180]}")
+    from app.llm import generate_answer
 
-    answer_lines.extend(
-        [
-            "",
-            "下一步你可以把这里替换成真实大模型回答，保持引用来源不变。",
-        ]
-    )
+    answer_text = generate_answer(question, top_chunks)
 
-    return {"answer": "\n".join(answer_lines), "citations": citations}
+    return {
+        "answer": answer_text,
+        "citations": top_chunks,
+    }
