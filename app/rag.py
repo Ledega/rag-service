@@ -6,6 +6,7 @@ from typing import Iterable
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+from langchain_text_splitter import RecursiveCharacterTextSplitter
 
 
 @dataclass(slots=True)
@@ -27,16 +28,8 @@ def chunk_text(text: str, chunk_size: int = 600, overlap: int = 100) -> list[str
     if not normalized:
         return []
 
-    chunks: list[str] = []
-    start = 0
-    while start < len(normalized):
-        end = min(len(normalized), start + chunk_size)
-        chunk = normalized[start:end].strip()
-        if chunk:
-            chunks.append(chunk)
-        if end >= len(normalized):
-            break
-        start = max(end - overlap, start + 1)
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=overlap)
+    chunks = text_splitter.split_text(normalized)
     return chunks
 
 

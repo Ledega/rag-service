@@ -73,24 +73,24 @@ def ensure_storage() -> None:
         connection.commit()
 
 
-def seed_demo_documents() -> None:
-    """
-    向数据库中植入初始的演示文档数据（如果数据库为空的话）。
-    """
-    with get_connection() as connection:
-        # 查询 documents 表中的记录总数
-        existing_count = connection.execute("SELECT COUNT(*) FROM documents").fetchone()[0]
-        # 如果数据库中已经存在文档数据，则直接返回，不再重复插入
-        if existing_count:
-            return
+# def seed_demo_documents() -> None:
+#     """
+#     向数据库中植入初始的演示文档数据（如果数据库为空的话）。
+#     """
+#     with get_connection() as connection:
+#         # 查询 documents 表中的记录总数
+#         existing_count = connection.execute("SELECT COUNT(*) FROM documents").fetchone()[0]
+#         # 如果数据库中已经存在文档数据，则直接返回，不再重复插入
+#         if existing_count:
+#             return
 
-    # 从当前项目的 app.rag 模块中导入分块函数 (延迟导入，防止循环依赖或加载过早)
-    from app.rag import chunk_text
+#     # 从当前项目的 app.rag 模块中导入分块函数 (延迟导入，防止循环依赖或加载过早)
+#     from app.rag import chunk_text
 
-    # 遍历前面定义的演示文档列表，将其逐个添加到数据库中
-    for name, content in DEMO_DOCUMENTS:
-        # chunk_text(content) 会将完整文本切割成片段（chunks）
-        add_document(name, content, chunk_text(content))
+#     # 遍历前面定义的演示文档列表，将其逐个添加到数据库中
+#     for name, content in DEMO_DOCUMENTS:
+#         # chunk_text(content) 会将完整文本切割成片段（chunks）
+#         add_document(name, content, chunk_text(content))
 
 
 @contextmanager
@@ -171,26 +171,26 @@ def list_documents() -> list[dict[str, object]]:
     return [dict(row) for row in rows]
 
 
-def list_chunks() -> list[dict[str, object]]:
-    """
-    获取数据库中所有的文本切片数据，同时包含它所属的文档名称。
+# def list_chunks() -> list[dict[str, object]]:
+#     """
+#     获取数据库中所有的文本切片数据，同时包含它所属的文档名称。
     
-    :return: 包含切片信息的字典列表
-    """
-    with get_connection() as connection:
-        # 使用 JOIN 联合查询，调取出每个 chunk 对应的具体信息和父文档名
-        rows = connection.execute(
-            """
-            SELECT
-                c.id,
-                c.document_id,
-                d.name AS document_name,
-                c.chunk_index,
-                c.content
-            FROM chunks c
-            JOIN documents d ON d.id = c.document_id
-            ORDER BY d.id DESC, c.chunk_index ASC
-            """
-        ).fetchall()
-    # 将 sqlite3.Row 对象转换为标准的 Python 字典并返回
-    return [dict(row) for row in rows]
+#     :return: 包含切片信息的字典列表
+#     """
+#     with get_connection() as connection:
+#         # 使用 JOIN 联合查询，调取出每个 chunk 对应的具体信息和父文档名
+#         rows = connection.execute(
+#             """
+#             SELECT
+#                 c.id,
+#                 c.document_id,
+#                 d.name AS document_name,
+#                 c.chunk_index,
+#                 c.content
+#             FROM chunks c
+#             JOIN documents d ON d.id = c.document_id
+#             ORDER BY d.id DESC, c.chunk_index ASC
+#             """
+#         ).fetchall()
+#     # 将 sqlite3.Row 对象转换为标准的 Python 字典并返回
+#     return [dict(row) for row in rows]

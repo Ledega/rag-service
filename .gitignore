@@ -17,5 +17,14 @@ build/
 dist/
 *.egg-info/
 
+# Environment files (contains API keys)
+.env
+
 # Local sqlite database
-rag.db
+data/rag.db
+
+# Chroma vector store persistence
+data/chroma/
+
+# Runtime data directories (PDF files uploaded by user)
+data/pdfs/

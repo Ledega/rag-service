@@ -1,4 +1,3 @@
-# 开启未来版本的注解行为，让类型注解以字符串形式延迟解析
 from __future__ import annotations
 
 from pathlib import Path
@@ -16,7 +15,8 @@ from pydantic import BaseModel, Field
 from starlette.requests import Request
 
 # 从你自己的 db模块 | RAG模块中导入若干函数：
-from app.db import add_document, ensure_storage, list_chunks, list_documents, seed_demo_documents
+from app.db import add_document, ensure_storage, list_documents
+from app.loader import load_pdfs_from_directory
 from app.rag import build_answer, chunk_text, retrieve_chunks
 
 # 当前文件路径，例如 /project/app/main.py
@@ -30,6 +30,9 @@ TEMPLATES_DIR = BASE_DIR / "templates"
 # 项目中的静态资源目录，通常放 CSS、JS、图片等文件
 STATIC_DIR = BASE_DIR / "static"
 
+# PDF 文件存放目录（项目根目录下的 data/pdfs 文件夹）
+PDF_DIR = BASE_DIR / "data" / "pdfs"
+
 # 创建 FastAPI 应用实例
 # title 是接口文档标题
 # version 是当前应用版本
@@ -37,7 +40,7 @@ app = FastAPI(title="RAG Service", version="0.1.0")
 
 # 把 /static 路由映射到本地 STATIC_DIR 目录
 # 这样浏览器访问 /static/xxx.css 时，就能取到对应静态文件
-# index.html line:309     
+# index.html line:309
 # <script src="/static/app.js" defer></script>
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
@@ -58,8 +61,13 @@ def startup_event() -> None:
     # 确保存储系统已经准备好，例如创建数据目录、数据库文件、数据表等
     ensure_storage()
 
-    # 写入演示文档，方便系统刚启动时就有基础数据可用
-    seed_demo_documents()
+    # 扫描 data/pdfs/ 目录下的所有 PDF 文件，自动提取文本、切块、入库
+    # 如果目录为空或不存在，会自动创建目录并不做任何事
+    imported = load_pdfs_from_directory(PDF_DIR, chunk_text, add_document)
+    if imported:
+        print(f"启动时已自动导入 {len(imported)} 份 PDF 文档: {', '.join(imported)}")
+    else:
+        print("未发现新的 PDF 文档，请将 PDF 文件放入 data/pdfs/ 目录后重启服务。")
 
 
 # 定义首页接口
@@ -172,19 +180,19 @@ async def upload_document(
 
 # 定义问答接口
 # 前端向该接口提交问题，系统返回基于文档的回答
-@app.post("/api/ask")
-def ask(request: AskRequest) -> dict[str, object]:
-    # 取出当前所有已存储的文档块
-    chunks = list_chunks()
+# @app.post("/api/ask")
+# def ask(request: AskRequest) -> dict[str, object]:
+#     # 取出当前所有已存储的文档块
+#     chunks = list_chunks()
 
-    # 根据用户问题，从全部文档块中检索最相关的块
-    retrieved = retrieve_chunks(request.question, chunks)
+#     # 根据用户问题，从全部文档块中检索最相关的块
+#     retrieved = retrieve_chunks(request.question, chunks)
 
-    # 基于“问题 + 检索结果”构造最终回答
-    response = build_answer(request.question, retrieved)
+#     # 基于“问题 + 检索结果”构造最终回答
+#     response = build_answer(request.question, retrieved)
 
-    # 把原始问题附加进响应中，方便前端展示或调试
-    response["question"] = request.question
+#     # 把原始问题附加进响应中，方便前端展示或调试
+#     response["question"] = request.question
 
-    # 返回最终结果
-    return response
+#     # 返回最终结果
+#     return response
