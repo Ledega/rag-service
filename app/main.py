@@ -28,6 +28,9 @@ STATIC_DIR = BASE_DIR / "static"
 app = FastAPI(title="RAG Service", version="0.1.0")
 
 # 把 /static 路由映射到本地 STATIC_DIR 目录
+# 这样浏览器访问 /static/xxx.css 时，就能取到对应静态文件
+# index.html line:309
+# <script src="/static/app.js" defer></script>
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 # 初始化 Jinja2 模板引擎，并指定模板目录
